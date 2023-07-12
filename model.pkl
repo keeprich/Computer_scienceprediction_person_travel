@@ -1,0 +1,63 @@
+import pandas as pd
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.preprocessing import OneHotEncoder
+
+# Step 1: Prepare the data
+data = {
+    'name': ['Rubi', 'Renell', 'Shaine', 'Kellby', 'Con', 'Mame', 'Ivette', 'James', 'Jedediah', 'Reta', 'Mario', 'Nicolea', 'Veronika', 'Anstice', 'Earvin', 'Lidia', 'Shel'],
+    'age': [43, 61, 60, 78, 63, 65, 38, 46, 60, 35, 81, 28, 44, 32, 30, 78, 82],
+    'location': ['Japan', 'Portugal', 'China', 'China', 'Sweden', 'Russia', 'Sierra Leone', 'Indonesia', 'Russia', 'Afghanistan', 'Venezuela', 'China', 'Indonesia', 'Democratic Republic of the Congo', 'Luxembourg', 'Brazil', 'China'],
+    'occupation': ['Estimator', 'Subcontractor', 'Construction Worker', 'Surveyor', 'Project Manager', 'Construction Expeditor', 'Project Manager', 'Construction Worker', 'Construction Manager', 'Construction Manager', 'Architect', 'Construction Foreman', 'Subcontractor', 'Architect', 'Engineer', 'Surveyor', 'Project Manager'],
+    'salary': [35841, 89259, 54964, 42957, 32349, 84775, 52219, 44861, 46915, 50384, 88122, 77829, 31959, 48947, 33588, 39178, 46182],
+    'love_travel': [True, False, True, True, True, True, True, False, True, False, True, False, True, False, True, True, False]
+}
+
+df = pd.DataFrame(data)
+
+# Step 2: Drop the 'name' column
+df = df.drop('name', axis=1)
+
+# Step 3: Prepare the data for training
+X = df.drop('love_travel', axis=1)  # Input features
+y = df['love_travel']  # Target variable
+
+# Step 4: Perform one-hot encoding for categorical variables
+categorical_cols = ['location', 'occupation']
+numerical_cols = ['age', 'salary']
+
+ohe = OneHotEncoder(sparse=False, handle_unknown='ignore')
+X_encoded = ohe.fit_transform(X[categorical_cols])
+X_encoded_cols = ohe.get_feature_names_out(categorical_cols)
+X_encoded = pd.DataFrame(X_encoded, columns=X_encoded_cols, index=X.index)
+X_encoded[numerical_cols] = X[numerical_cols]
+
+# Step 5: Choose and train the model
+model = RandomForestClassifier()
+model.fit(X_encoded, y)
+
+# Step 6: Prepare new data for prediction
+new_data = {
+    'age': [40],
+    'location': ['China'],
+    'occupation': ['Architect'],
+    'salary': [60000]
+}
+
+new_df = pd.DataFrame(new_data)
+
+# Step 7: Perform one-hot encoding for new data
+new_df_encoded = ohe.transform(new_df[categorical_cols])
+new_df_encoded_cols = ohe.get_feature_names_out(categorical_cols)
+new_df_encoded = pd.DataFrame(new_df_encoded, columns=new_df_encoded_cols, index=new_df.index)
+new_df_encoded[numerical_cols] = new_df[numerical_cols]
+
+# Step 8: Make predictions on the new data
+new_predictions = model.predict(new_df_encoded)
+
+# Convert predictions to human-readable labels
+predicted_labels = ['Yes' if prediction else 'No' for prediction in new_predictions]
+
+# Print the predictions
+print("Predictions:")
+for i in range(len(new_df)):
+    print(f"Age: {new_data['age'][i]}, Location: {new_data['location'][i]}, Occupation: {new_data['occupation'][i]}, Salary: {new_data['salary'][i]}, Love Travel: {predicted_labels[i]}")
